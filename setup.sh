@@ -111,10 +111,6 @@ if [ $COMMAND = "install" ]; then
         sed -e "s|\(server:\) .*|\1 https://${CLUSTER2_IP}:6443|" | \
         kubectl apply -f - --context=kind-cluster1
 
-    echo -e "\nMulti-DC Istio cluster setup completed."
-
-elif [ $COMMAND = "apps" ]; then
-
     install_applications kind-cluster1
     install_applications kind-cluster2
 
@@ -122,6 +118,8 @@ elif [ $COMMAND = "apps" ]; then
     kubectl --context=kind-cluster2 apply -f helloworld.yaml -l version=v2 -n sample
     kubectl --context=kind-cluster1 rollout status deployment helloworld-v1 -n sample
     kubectl --context=kind-cluster2 rollout status deployment helloworld-v2 -n sample
+
+    echo -e "\nMulti-DC Istio cluster setup completed."
 
 elif [ $COMMAND = "status" ]; then
     # TODO: add some real checking here whether we're hitting the service in the remote cluster
