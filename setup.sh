@@ -39,25 +39,20 @@ function metallb_setup {
     cat metallb/metallb-config.yaml | envtpl | kubectl apply -f -
 }
 
-function cidr_range {
-    local cidr=$1
-    cidr ${cidr} | tr -d ' '
-}
-
 function node_setup {
     local instance=$1
     local lb_subnet=$2
 
     kind create cluster --name ${instance} --config $ISTIO/istio/prow/config/trustworthy-jwt.yaml
-    metallb_setup $(cidr_range ${lb_subnet})
+    metallb_setup ${lb_subnet}
 }
 
 function infra_setup {
     # get the kind Docker network subnet
     # SUBNET=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
 
-    node_setup cluster1 172.18.1.0/24
-    node_setup cluster2 172.18.2.0/24
+    node_setup cluster1 "172.18.1.0 - 172.18.1.255"
+    node_setup cluster2 "172.18.2.0 - 172.18.2.255"
 }
 
 function install_istio {
