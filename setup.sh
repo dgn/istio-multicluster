@@ -51,8 +51,8 @@ function infra_setup {
     # get the kind Docker network subnet
     # SUBNET=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
 
-    node_setup cluster1 "172.18.1.0 - 172.18.1.255"
-    node_setup cluster2 "172.18.2.0 - 172.18.2.255"
+    node_setup cluster1 "172.18.1.0-172.18.1.255"
+    node_setup cluster2 "172.18.2.0-172.18.2.255"
 }
 
 function install_istio {
