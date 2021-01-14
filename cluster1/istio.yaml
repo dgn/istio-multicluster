@@ -1,9 +1,17 @@
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
+  meshConfig:
+    outboundTrafficPolicy:
+      mode: REGISTRY_ONLY
+    defaultConfig:
+      proxyMetadata:
+        ISTIO_META_DNS_CAPTURE: "true"
   values:
     global:
       meshID: mesh1
       multiCluster:
         clusterName: cluster1
       network: network1
+    pilot:
+      image: registry.gitlab.com/dgrimm/istio/pilot:dgn

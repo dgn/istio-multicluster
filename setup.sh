@@ -70,7 +70,7 @@ function install_istio {
 
     istioctl --context=${CONTEXT} install -y -f "${CLUSTER}/istio.yaml"
     istioctl --context=${CONTEXT} install -y -f "${CLUSTER}/eastwest-gateway.yaml"
-    kubectl --context=${CONTEXT} apply  -f expose-services.yaml
+    kubectl --context=${CONTEXT} apply  -f "${CLUSTER}/expose-services.yaml"
 }
 
 

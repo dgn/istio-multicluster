@@ -41,3 +41,5 @@ spec:
       network: network1
       multiCluster:
         clusterName: cluster1
+      proxy:
+        image: registry.gitlab.com/dgrimm/istio/proxyv2:dgn

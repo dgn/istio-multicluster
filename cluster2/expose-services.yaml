@@ -1,0 +1,57 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: cross-network-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: eastwestgateway
+  servers:
+    - port:
+        number: 15443
+        name: tls
+        protocol: TLS
+      tls:
+        mode: AUTO_PASSTHROUGH
+      hosts:
+        - "*.federation.local"
+---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: EnvoyFilter
+# metadata:
+#   name: istio-multicluster-ingressgateway
+#   namespace: istio-system
+#   labels:
+# spec:
+#   workloadSelector:
+#     labels:
+#       istio: eastwestgateway
+#   configPatches:
+#   - applyTo: NETWORK_FILTER
+#     match:
+#       context: GATEWAY
+#       listener:
+#         portNumber: 15443
+#         filterChain:
+#           filter:
+#             name: "envoy.filters.network.sni_cluster"
+#     patch:
+#       operation: INSERT_AFTER
+#       value:
+#         name: "envoy.filters.network.tcp_cluster_rewrite"
+#         typed_config:
+#           "@type": "type.googleapis.com/istio.envoy.config.filter.network.tcp_cluster_rewrite.v2alpha1.TcpClusterRewrite"
+#           cluster_pattern: "\\.federation.local$"
+#           cluster_replacement: ".cluster.local"
+# ---
+# ## To ensure all traffic to globalDomainSuffix is using mTLS
+# apiVersion: networking.istio.io/v1alpha3
+# kind: DestinationRule
+# metadata:
+#   name: istio-multicluster-ingressgateway
+#   namespace: istio-system
+# spec:
+#   host: "*.cluster2"
+#   trafficPolicy:
+#     tls:
+#       mode: ISTIO_MUTUAL
