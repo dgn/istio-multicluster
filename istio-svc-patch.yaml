@@ -1,0 +1,6 @@
+spec:
+  ports:
+  - name: http-federation
+    port: 8188
+    targetPort: 8188
+    protocol: TCP

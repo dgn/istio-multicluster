@@ -14,7 +14,54 @@ spec:
       tls:
         mode: AUTO_PASSTHROUGH
       hosts:
-        - "*.federation.local"
+        - "*.local"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: federation-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http-federation
+        protocol: HTTP
+      hosts:
+        - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: istiod-federation
+  namespace: istio-system
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - federation-gateway
+  http:
+  - route:
+    - destination:
+        port:
+          number: 8188
+        host: istiod
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: istiod-federation
+  namespace: istio-system
+spec:
+  host: istiod
+  trafficPolicy:
+    portLevelSettings:
+    - port:
+        number: 8188
+      tls:
+        mode: DISABLE
 ---
 # apiVersion: networking.istio.io/v1alpha3
 # kind: EnvoyFilter

@@ -23,6 +23,9 @@ spec:
               value: network1
           service:
             ports:
+              - name: http-federation
+                port: 8188
+                targetPort: 8188
               - name: status-port
                 port: 15021
                 targetPort: 15021
@@ -37,9 +40,11 @@ spec:
                 targetPort: 15017
   values:
     global:
-      meshID: mesh1
-      network: network1
       multiCluster:
         clusterName: cluster1
+      network: network1
+      imagePullPolicy: Always
       proxy:
-        image: registry.gitlab.com/dgrimm/istio/proxyv2:dgn
+        clusterDomain: cluster1.local
+    pilot:
+      image: registry.gitlab.com/dgrimm/istio/pilot:dgn

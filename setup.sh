@@ -43,7 +43,7 @@ function node_setup {
     local instance=$1
     local lb_subnet=$2
 
-    kind create cluster --name ${instance} --config $ISTIO/istio/prow/config/trustworthy-jwt.yaml
+    kind create cluster --name ${instance} --config trustworthy-jwt.yaml
     metallb_setup ${lb_subnet}
 }
 
@@ -99,17 +99,20 @@ if [ $COMMAND = "install" ]; then
     CLUSTER1_IP="$(docker container inspect cluster1-control-plane --format '{{.NetworkSettings.Networks.kind.IPAddress}}')"
     CLUSTER2_IP="$(docker container inspect cluster2-control-plane --format '{{.NetworkSettings.Networks.kind.IPAddress}}')"
 
-    istioctl x create-remote-secret \
-        --context=kind-cluster1 \
-        --name=cluster1 | \
-        sed -e "s|\(server:\) .*|\1 https://${CLUSTER1_IP}:6443|" | \
-        kubectl apply -f - --context=kind-cluster2
+    # istioctl x create-remote-secret \
+    #     --context=kind-cluster1 \
+    #     --name=cluster1 | \
+    #     sed -e "s|\(server:\) .*|\1 https://${CLUSTER1_IP}:6443|" | \
+    #     kubectl apply -f - --context=kind-cluster2
 
-    istioctl x create-remote-secret \
-        --context=kind-cluster2 \
-        --name=cluster2 | \
-        sed -e "s|\(server:\) .*|\1 https://${CLUSTER2_IP}:6443|" | \
-        kubectl apply -f - --context=kind-cluster1
+    # istioctl x create-remote-secret \
+    #     --context=kind-cluster2 \
+    #     --name=cluster2 | \
+    #     sed -e "s|\(server:\) .*|\1 https://${CLUSTER2_IP}:6443|" | \
+    #     kubectl apply -f - --context=kind-cluster1
+
+    kubectl --context kind-cluster1 patch svc -n istio-system istiod --patch "$(cat istio-svc-patch.yaml)"
+    kubectl --context kind-cluster2 patch svc -n istio-system istiod --patch "$(cat istio-svc-patch.yaml)"
 
     install_applications kind-cluster1
     install_applications kind-cluster2
@@ -122,17 +125,17 @@ if [ $COMMAND = "install" ]; then
     echo -e "\nMulti-DC Istio cluster setup completed."
 
 elif [ $COMMAND = "status" ]; then
-    # TODO: add some real checking here whether we're hitting the service in the remote cluster
-
+    echo "sleep.sample.svc.cluster1.local -> helloworld.sample.svc.cluster2.local"
     kubectl exec --context=kind-cluster1 -n sample -c sleep \
     "$(kubectl get pod --context="kind-cluster1" -n sample -l \
     app=sleep -o jsonpath='{.items[0].metadata.name}')" \
-    -- curl helloworld.sample:5000/hello 2>/dev/null
+    -- curl helloworld.sample.svc.cluster2.local:5000/hello 2>/dev/null
 
+    echo "sleep.sample.svc.cluster2.local -> helloworld.sample.svc.cluster1.local"
     kubectl exec --context=kind-cluster2 -n sample -c sleep \
     "$(kubectl get pod --context="kind-cluster2" -n sample -l \
     app=sleep -o jsonpath='{.items[0].metadata.name}')" \
-    -- curl helloworld.sample:5000/hello 2>/dev/null
+    -- curl helloworld.sample.svc.cluster1.local:5000/hello 2>/dev/null
 
 elif [ $COMMAND = "uninstall" ]; then
 

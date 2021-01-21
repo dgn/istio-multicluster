@@ -2,16 +2,25 @@ apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   meshConfig:
+    accessLogFile: /dev/stdout
     outboundTrafficPolicy:
       mode: REGISTRY_ONLY
+    trustDomain: cluster1.local
+    trustDomainAliases:
+      - cluster2.local
     defaultConfig:
       proxyMetadata:
         ISTIO_META_DNS_CAPTURE: "true"
   values:
     global:
-      meshID: mesh1
       multiCluster:
         clusterName: cluster1
       network: network1
+      imagePullPolicy: Always
+      proxy:
+        clusterDomain: cluster1.local
     pilot:
       image: registry.gitlab.com/dgrimm/istio/pilot:dgn
+      env:
+        NETWORK_NAME: network1
+        PILOT_REMOTE_FEDERATION_DISCOVERY: "http://172.18.2.0"

@@ -37,9 +37,9 @@ spec:
                 targetPort: 15017
   values:
     global:
-      meshID: mesh1
-      network: network2
       multiCluster:
         clusterName: cluster2
+      network: network2
+      imagePullPolicy: Always
       proxy:
-        image: registry.gitlab.com/dgrimm/istio/proxyv2:dgn
+        clusterDomain: cluster2.local
