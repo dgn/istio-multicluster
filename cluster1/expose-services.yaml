@@ -1,7 +1,7 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
-  name: cross-network-gateway
+  name: federation-ingress-gateway
   namespace: istio-system
 spec:
   selector:
@@ -15,33 +15,25 @@ spec:
         mode: AUTO_PASSTHROUGH
       hosts:
         - "*.local"
----
-apiVersion: networking.istio.io/v1alpha3
-kind: Gateway
-metadata:
-  name: federation-gateway
-  namespace: istio-system
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
     - port:
-        number: 80
-        name: http-federation
-        protocol: HTTP
+        number: 8188
+        name: https-istiod
+        protocol: HTTPS
+      tls:
+        mode: ISTIO_MUTUAL
       hosts:
         - "*"
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: istiod-federation
+  name: istiod-federation-ingress
   namespace: istio-system
 spec:
   hosts:
   - "*"
   gateways:
-  - federation-gateway
+  - federation-ingress-gateway
   http:
   - route:
     - destination:
@@ -63,6 +55,85 @@ spec:
       tls:
         mode: DISABLE
 ---
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: external-svc-istiod
+  namespace: istio-system
+spec:
+  hosts:
+  - istiod.cluster2.local
+  addresses:
+  - 192.192.192.192/32
+  ports:
+  - number: 8188
+    name: https-istiod
+    protocol: HTTPS
+  location: MESH_INTERNAL
+  resolution: STATIC
+  endpoints:
+  - address: 172.18.2.1
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: direct-istiod-through-egress-gateway
+  namespace: istio-system
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - federation-egress-gateway
+  http:
+  - match:
+    - port: 8188
+    route:
+    - destination:
+        host: istiod.cluster2.local
+        port:
+          number: 8188
+      weight: 100
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: federation-egress-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: egressgateway
+  servers:
+    - port:
+        number: 8188
+        name: http-istiod
+        protocol: HTTP
+      hosts:
+        - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: egressgateway-for-istiod
+  namespace: istio-system
+spec:
+  host: istio-egressgateway.istio-system.svc.cluster.local
+  subsets:
+  - name: istiod
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: istiod-federation
+  namespace: istio-system
+spec:
+  host: "istiod.cluster2.local"
+  trafficPolicy:
+    portLevelSettings:
+    - port:
+        number: 8188
+      tls:
+        mode: ISTIO_MUTUAL
+
 # apiVersion: networking.istio.io/v1alpha3
 # kind: EnvoyFilter
 # metadata:

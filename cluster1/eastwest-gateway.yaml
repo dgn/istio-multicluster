@@ -38,6 +38,18 @@ spec:
               - name: tls-webhook
                 port: 15017
                 targetPort: 15017
+    egressGateways:
+      - name: istio-egressgateway
+        label:
+          istio: egressgateway
+          app: istio-egressgateway
+        enabled: true
+        k8s:
+          service:
+            ports:
+              - name: http-federation
+                port: 8188
+                targetPort: 8188
   values:
     global:
       multiCluster:

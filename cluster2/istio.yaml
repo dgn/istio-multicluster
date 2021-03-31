@@ -23,4 +23,4 @@ spec:
       image: registry.gitlab.com/dgrimm/istio/pilot:dgn
       env:
         NETWORK_NAME: network2
-        PILOT_REMOTE_FEDERATION_DISCOVERY: "http://172.18.1.0"
+        PILOT_REMOTE_FEDERATION_DISCOVERY: "http://istio-egressgateway.istio-system.svc.cluster.local:8188"
